@@ -1,0 +1,76 @@
+{
+  "manifest_version": 3,
+  "name": "FocusGuard — Study Timer & Site Blocker",
+  "version": "1.4.0",
+  "description": "Replace your new tab with a study dashboard. Track your time, block distracting sites, and stay focused with Pomodoro sessions.",
+  "author": "FocusGuard",
+  "homepage_url": "https://github.com/focus-guard",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "focusguard@study-timer.dev",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+
+  "permissions": [
+    "storage",
+    "tabs",
+    "webNavigation",
+    "alarms",
+    "notifications",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "chrome_url_overrides": {
+    "newtab": "newtab/newtab.html"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+
+  "background": {
+    "scripts": ["background/background.js"]
+  },
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "block_rules",
+        "enabled": true,
+        "path": "background/block_rules.json"
+      }
+    ]
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked/blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

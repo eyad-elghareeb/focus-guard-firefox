@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusGuard</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body data-mode="work">
+  <div id="app">
+
+    <!-- Animated Background -->
+    <div class="bg-effects">
+      <div class="bg-orb bg-orb-1"></div>
+      <div class="bg-orb bg-orb-2"></div>
+      <div class="bg-orb bg-orb-3"></div>
+      <div class="bg-grid"></div>
+    </div>
+
+    <!-- ─── Top Bar ─────────────────────────────────────── -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="2.5"/>
+              <path d="M14 7v7l4.5 3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="logo-text">FocusGuard</span>
+        </div>
+      </div>
+      <div class="top-bar-center">
+        <div class="greeting" id="greeting"></div>
+      </div>
+      <div class="top-bar-right">
+        <div class="date-pill" id="dateDisplay"></div>
+        <button class="icon-btn" id="btnOpenSettings" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09c-.658.003-1.25.396-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── Main Content ────────────────────────────────── -->
+    <main class="dashboard">
+
+      <!-- Left: Timer Section -->
+      <section class="timer-section">
+        <div class="timer-card glass-card">
+
+          <!-- Mode Tabs -->
+          <div class="timer-modes">
+            <button class="mode-btn active" data-mode="work">
+              <span class="mode-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </span>
+              Focus
+            </button>
+            <button class="mode-btn" data-mode="short_break">
+              <span class="mode-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </span>
+              Short Break
+            </button>
+            <button class="mode-btn" data-mode="long_break">
+              <span class="mode-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/></svg>
+              </span>
+              Long Break
+            </button>
+          </div>
+
+          <!-- Circular Timer -->
+          <div class="timer-ring-container">
+            <svg class="timer-ring" viewBox="0 0 280 280">
+              <defs>
+                <linearGradient id="ringGradientWork" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ef4444"/>
+                  <stop offset="100%" stop-color="#f97316"/>
+                </linearGradient>
+                <linearGradient id="ringGradientBreak" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#10b981"/>
+                  <stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+                <linearGradient id="ringGradientPause" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#eab308"/>
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="4" result="blur"/>
+                  <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                </filter>
+              </defs>
+              <circle class="timer-ring-bg" cx="140" cy="140" r="125"/>
+              <circle class="timer-ring-progress" cx="140" cy="140" r="125"
+                      id="timerProgress"
+                      stroke-dasharray="785.40"
+                      stroke-dashoffset="0"
+                      filter="url(#glow)"/>
+            </svg>
+            <div class="timer-display">
+              <span class="timer-time" id="timerTime">25:00</span>
+              <span class="timer-label" id="timerLabel">FOCUS TIME</span>
+            </div>
+          </div>
+
+          <!-- Timer Controls -->
+          <div class="timer-controls">
+            <button class="ctrl-btn ctrl-secondary" id="btnReset" title="Reset">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+            <button class="ctrl-btn ctrl-primary" id="btnStart">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" id="btnStartIcon">
+                <polygon points="6,3 20,12 6,21"/>
+              </svg>
+            </button>
+            <button class="ctrl-btn ctrl-secondary" id="btnSkip" title="Skip">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="5,4 15,12 5,20" fill="currentColor"/>
+                <line x1="19" y1="5" x2="19" y2="19"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Pomodoro Counter -->
+          <div class="pomodoro-counter" id="pomodoroDots"></div>
+          <div class="pomodoro-count" id="pomodoroCount">0 / 4</div>
+
+          <!-- Focus Message -->
+          <div class="focus-message" id="focusMessage">Ready to focus? Hit play to start.</div>
+        </div>
+      </section>
+
+      <!-- Right: Analytics Sidebar -->
+      <section class="stats-section">
+
+        <!-- Analytics Card -->
+        <div class="stat-card glass-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon stat-icon-blue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+              </svg>
+            </div>
+            <h3 class="stat-card-title">Analytics</h3>
+          </div>
+
+          <!-- Period Tabs -->
+          <div class="analytics-tabs">
+            <button class="analytics-tab active" data-period="day">Day</button>
+            <button class="analytics-tab" data-period="week">Week</button>
+            <button class="analytics-tab" data-period="month">Month</button>
+          </div>
+
+          <!-- Quick Stats Row -->
+          <div class="analytics-quick-stats" id="analyticsQuickStats">
+            <div class="quick-stat">
+              <span class="quick-stat-value" id="anFocusTime">0m</span>
+              <span class="quick-stat-label">Focus</span>
+            </div>
+            <div class="quick-stat">
+              <span class="quick-stat-value" id="anPomodoros">0</span>
+              <span class="quick-stat-label">Pomodoros</span>
+            </div>
+            <div class="quick-stat">
+              <span class="quick-stat-value" id="anAvgSession">0m</span>
+              <span class="quick-stat-label">Avg/Session</span>
+            </div>
+            <div class="quick-stat">
+              <span class="quick-stat-value" id="anBestStreak">0</span>
+              <span class="quick-stat-label">Best Streak</span>
+            </div>
+          </div>
+
+          <!-- Period Chart -->
+          <div class="analytics-chart" id="analyticsChart"></div>
+
+          <!-- Extra Stats Row -->
+          <div class="analytics-extra" id="analyticsExtra"></div>
+        </div>
+
+        <!-- Site Usage -->
+        <div class="stat-card glass-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon stat-icon-amber">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            </div>
+            <h3 class="stat-card-title">Site Usage</h3>
+          </div>
+          <div class="site-usage-list" id="siteUsageList">
+            <div class="empty-state">Start browsing to see data</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ─── Study Log + Todo Row ────────────────────────────── -->
+    <div class="bottom-row">
+
+      <!-- Study Log Section -->
+      <section class="study-log-section glass-card">
+        <div class="study-log-header">
+          <div class="study-log-header-left">
+            <div class="study-log-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <h3>Study Log</h3>
+            <span class="study-log-total" id="studyLogTotal">0m</span>
+          </div>
+          <div class="study-log-header-right">
+            <div class="log-date-nav">
+              <button class="icon-btn-sm" id="btnLogPrevDay" title="Previous day">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="log-date-label" id="logDateLabel">Today</span>
+              <button class="icon-btn-sm" id="btnLogNextDay" title="Next day">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <button class="btn-add-log" id="btnAddLogEntry" title="Add manual study time">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Log Time
+            </button>
+          </div>
+        </div>
+        <div class="study-log-timeline" id="studyLogTimeline">
+          <div class="empty-state">No study sessions logged yet</div>
+        </div>
+      </section>
+
+      <!-- Todo List Section -->
+      <section class="todo-section glass-card">
+        <div class="todo-header">
+          <div class="todo-header-left">
+            <div class="todo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </div>
+            <h3>Tasks</h3>
+            <span class="todo-count" id="todoCount">0</span>
+          </div>
+          <button class="btn-clear-done" id="btnClearDone" title="Clear completed tasks">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="todo-add">
+          <input type="text" id="todoInput" placeholder="Add a task..." maxlength="200" autocomplete="off">
+          <button class="btn-todo-add" id="btnAddTodo" title="Add task">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="todo-list" id="todoList">
+          <div class="empty-state">No tasks yet</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ─── Settings Modal ──────────────────────────────── -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal glass-card">
+        <div class="modal-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09c-.658.003-1.25.396-1.51 1z"/>
+            </svg>
+            Settings
+          </h2>
+          <button class="modal-close" id="btnCloseSettings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Timer Durations -->
+          <div class="settings-group">
+            <h4>Timer Durations</h4>
+            <div class="settings-row">
+              <label>Focus (min)</label>
+              <input type="number" id="settingWork" min="1" max="120" value="25">
+            </div>
+            <div class="settings-row">
+              <label>Short Break (min)</label>
+              <input type="number" id="settingShortBreak" min="1" max="30" value="5">
+            </div>
+            <div class="settings-row">
+              <label>Long Break (min)</label>
+              <input type="number" id="settingLongBreak" min="1" max="60" value="15">
+            </div>
+            <div class="settings-row">
+              <label>Long Break After</label>
+              <input type="number" id="settingLongBreakInterval" min="2" max="10" value="4">
+            </div>
+          </div>
+          <!-- Daily Goal -->
+          <div class="settings-group">
+            <h4>Daily Goal</h4>
+            <div class="settings-row">
+              <label>Focus Goal</label>
+              <div class="goal-input-row">
+                <input type="number" id="settingGoalHours" min="0" max="16" value="8">
+                <span class="goal-unit">h</span>
+                <input type="number" id="settingGoalMinutes" min="0" max="59" value="0">
+                <span class="goal-unit">m</span>
+              </div>
+            </div>
+          </div>
+          <!-- Automation -->
+          <div class="settings-group">
+            <h4>Automation</h4>
+            <div class="settings-row">
+              <label>Auto-start Breaks</label>
+              <label class="toggle-switch small"><input type="checkbox" id="settingAutoBreaks" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="settings-row">
+              <label>Auto-start Focus</label>
+              <label class="toggle-switch small"><input type="checkbox" id="settingAutoWork"><span class="toggle-track"></span></label>
+            </div>
+          </div>
+          <!-- Blocking -->
+          <div class="settings-group">
+            <h4>Site Blocking</h4>
+            <div class="settings-row">
+              <label>Block during Focus</label>
+              <label class="toggle-switch small"><input type="checkbox" id="settingBlockWork" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="settings-row">
+              <label>Block during Breaks</label>
+              <label class="toggle-switch small"><input type="checkbox" id="settingBlockBreaks"><span class="toggle-track"></span></label>
+            </div>
+          </div>
+          <!-- Blocked Sites Manager (moved from homepage) -->
+          <div class="settings-group">
+            <h4>Blocked Sites</h4>
+            <div class="settings-blocked-status" id="settingsBlockStatus">
+              <span class="toggle-label" id="blockToggleLabel">Active</span>
+              <label class="toggle-switch small"><input type="checkbox" id="blockToggle" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="settings-blocked-grid" id="blockedGrid"></div>
+            <div class="add-site-row">
+              <div class="add-site-input-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="addSiteInput" placeholder="Add site (e.g. twitter.com)" autocomplete="off">
+              </div>
+              <select id="addSiteCategory">
+                <option value="social">Social</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="news">News</option>
+                <option value="shopping">Shopping</option>
+                <option value="gaming">Gaming</option>
+                <option value="custom">Custom</option>
+              </select>
+              <button class="btn-add" id="btnAddSite">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <!-- Notifications -->
+          <div class="settings-group">
+            <h4>Notifications</h4>
+            <div class="settings-row">
+              <label>Desktop Notifications</label>
+              <label class="toggle-switch small"><input type="checkbox" id="settingNotifications" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="settings-row">
+              <label>Sound Alerts</label>
+              <label class="toggle-switch small"><input type="checkbox" id="settingSound" checked><span class="toggle-track"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-danger" id="btnResetData">Reset Data</button>
+          <button class="btn-primary" id="btnSaveSettings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Study Log Entry Modal ────────────────────────── -->
+    <div class="modal-overlay" id="studyLogModal">
+      <div class="modal glass-card modal-sm">
+        <div class="modal-header">
+          <h2 id="studyLogModalTitle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Log Study Time
+          </h2>
+          <button class="modal-close" id="btnCloseStudyLogModal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="logEntryId" value="">
+          <div class="log-form-group">
+            <label for="logHours">Duration</label>
+            <div class="log-duration-row">
+              <div class="log-duration-input-wrap">
+                <input type="number" id="logHours" min="0" max="24" value="0" placeholder="0">
+                <span class="log-duration-unit">hrs</span>
+              </div>
+              <div class="log-duration-input-wrap">
+                <input type="number" id="logMinutes" min="0" max="59" value="30" placeholder="0">
+                <span class="log-duration-unit">min</span>
+              </div>
+            </div>
+          </div>
+          <div class="log-form-group">
+            <label for="logSubject">Subject <span class="optional">(optional)</span></label>
+            <input type="text" id="logSubject" placeholder="e.g. Math, React, Essay writing..." maxlength="60" autocomplete="off">
+          </div>
+          <div class="log-form-group">
+            <label for="logNote">Note <span class="optional">(optional)</span></label>
+            <input type="text" id="logNote" placeholder="What did you work on?" maxlength="200" autocomplete="off">
+          </div>
+          <div class="log-form-group">
+            <label for="logDate">Date</label>
+            <input type="date" id="logDate">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-danger btn-delete-log" id="btnDeleteLogEntry" style="display:none">Delete</button>
+          <div class="modal-footer-spacer"></div>
+          <button class="btn-secondary" id="btnCancelLogEntry">Cancel</button>
+          <button class="btn-primary" id="btnSaveLogEntry">Save</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="newtab.js"></script>
+</body>
+</html>
