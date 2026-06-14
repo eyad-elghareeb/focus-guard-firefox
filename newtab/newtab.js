@@ -628,6 +628,7 @@ async function renderStudyLog() {
 }
 
 // Lightweight update: only update the active session indicator, not the whole log
+// Avoids DOM replacement to prevent CSS animation flicker on .live-dot
 function updateActiveSessionIndicator() {
   const slot = document.getElementById("activeSessionSlot");
   if (!slot) return;
@@ -637,31 +638,41 @@ function updateActiveSessionIndicator() {
     ? getActiveSessionElapsed(currentState.timer) : 0;
 
   if (!isViewingToday || activeElapsed <= 0) {
-    slot.textContent = "";
-    slot.style.display = "none";
+    if (slot.style.display !== "none") {
+      slot.textContent = "";
+      slot.style.display = "none";
+    }
     return;
   }
 
-  slot.style.display = "";
-  setHTML(slot, `
-    <div class="log-entry log-entry-active">
-      <div class="log-entry-dot active-dot"></div>
-      <div class="log-entry-body">
-        <div class="log-entry-top">
-          <span class="log-entry-subject">Focus Session</span>
-          <span class="log-entry-duration active-duration">${formatDuration(activeElapsed)}</span>
-        </div>
-        <div class="log-entry-note">Currently in progress...</div>
-        <div class="log-entry-meta">
-          <span class="live-indicator">
-            <span class="live-dot"></span>
-            Live
-          </span>
-          <span class="log-entry-source active">Active</span>
+  const durationEl = slot.querySelector(".active-duration");
+  if (!durationEl) {
+    // First time: build the HTML
+    slot.style.display = "";
+    setHTML(slot, `
+      <div class="log-entry log-entry-active">
+        <div class="log-entry-dot active-dot"></div>
+        <div class="log-entry-body">
+          <div class="log-entry-top">
+            <span class="log-entry-subject">Focus Session</span>
+            <span class="log-entry-duration active-duration">${formatDuration(activeElapsed)}</span>
+          </div>
+          <div class="log-entry-note">Currently in progress...</div>
+          <div class="log-entry-meta">
+            <span class="live-indicator">
+              <span class="live-dot"></span>
+              Live
+            </span>
+            <span class="log-entry-source active">Active</span>
+          </div>
         </div>
       </div>
-    </div>
-  `);
+    `);
+  } else {
+    // Already built: just update the duration text to avoid flickering animations
+    slot.style.display = "";
+    durationEl.textContent = formatDuration(activeElapsed);
+  }
 }
 
 // Bind edit/delete actions on study log entries (called once per full render)

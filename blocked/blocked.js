@@ -64,7 +64,24 @@ btnBack.addEventListener("click", () => {
 // ─── Emergency Access ──────────────────────────────────────────
 // Uses background alarm to safely re-enable blocking after 5 minutes,
 // even after this page context is destroyed by navigation.
+// Navigates to the original URL the user was trying to reach.
 let emergencyUsed = false;
+
+// Try to recover the original URL that was blocked
+async function getOriginalUrl() {
+  const urlParam = params.get("url");
+  if (urlParam) return urlParam;
+  try {
+    const tab = await browser.tabs.getCurrent();
+    if (tab && tab.id) {
+      const stored = await browser.storage.session.get(`emergency_orig_${tab.id}`);
+      if (stored[`emergency_orig_${tab.id}`]) {
+        return stored[`emergency_orig_${tab.id}`];
+      }
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
 
 btnEmergency.addEventListener("click", async () => {
   if (emergencyUsed) return;
@@ -84,10 +101,10 @@ btnEmergency.addEventListener("click", async () => {
       domain: blockedDomain
     });
 
-    // Navigate to the original site
-    browser.tabs.getCurrent().then(tab => {
-      browser.tabs.update(tab.id, { url: `https://${blockedDomain}` });
-    });
+    // Navigate to the original URL, falling back to the domain root
+    const tab = await browser.tabs.getCurrent();
+    const originalUrl = await getOriginalUrl();
+    browser.tabs.update(tab.id, { url: originalUrl || `https://${blockedDomain}` });
   } catch (e) {
     console.error("Emergency access failed:", e);
   }

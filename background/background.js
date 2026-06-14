@@ -581,8 +581,9 @@ async function checkAndBlockTab(tabId, url) {
 
     if (matchedSite) {
       // Use matchedSite.domain (not hostname) to ensure emergency toggle works
+      // Pass the original URL so emergency access can navigate back to it
       const blockedUrl = browser.runtime.getURL(
-        `/blocked/blocked.html?domain=${encodeURIComponent(matchedSite.domain)}`
+        `/blocked/blocked.html?domain=${encodeURIComponent(matchedSite.domain)}&url=${encodeURIComponent(url)}`
       );
       browser.tabs.update(tabId, { url: blockedUrl });
     }
@@ -633,6 +634,23 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
       await browser.storage.local.remove("emergencyDomain");
     }
   }
+});
+
+// ─── Capture original URL before DNR redirects ──────────────
+browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
+  if (details.frameId !== 0) return;
+  try {
+    const url = details.url;
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    if (!hostname) return;
+    const s = await getState();
+    const matchedSite = s.blockedSites.find(
+      site => site.enabled && (hostname === site.domain || hostname.endsWith(`.${site.domain}`))
+    );
+    if (matchedSite) {
+      await browser.storage.session.set({ [`emergency_orig_${details.tabId}`]: url });
+    }
+  } catch (e) { /* ignore */ }
 });
 
 // ─── Tabs Event Handlers ──────────────────────────────────────
