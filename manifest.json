@@ -4,7 +4,7 @@
   "version": "1.6.0",
   "description": "Replace your new tab with a study dashboard. Track your time, block distracting sites, and stay focused with Pomodoro sessions.",
   "author": "FocusGuard",
-  "homepage_url": "https://github.com/focus-guard",
+  "homepage_url": "https://github.com/eyad-elghareeb/focus-guard-firefox",
 
   "browser_specific_settings": {
     "gecko": {
