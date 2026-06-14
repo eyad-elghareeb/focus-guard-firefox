@@ -1232,9 +1232,12 @@ async function handleAddTodo() {
 
 async function handleAddQuickAccess() {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length === 0 || !tabs[0].url) return;
-    const url = new URL(tabs[0].url);
+    const tabs = await browser.tabs.query({ currentWindow: true });
+    const extUrl = browser.runtime.getURL("");
+    tabs.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+    const tab = tabs.find(t => t.url && !t.url.startsWith(extUrl) && !t.url.startsWith("about:") && !t.url.startsWith("moz-extension:") && !t.url.startsWith("chrome-extension:") && !t.url.startsWith("chrome:") && !t.url.startsWith("data:") && !t.url.startsWith("view-source:"));
+    if (!tab) return;
+    const url = new URL(tab.url);
     const domain = url.hostname.replace(/^www\./, "");
     if (!domain) return;
     await browser.runtime.sendMessage({ action: "addQuickAccess", domain });
