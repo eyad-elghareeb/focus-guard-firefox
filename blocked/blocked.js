@@ -47,12 +47,12 @@ async function updateTimerDisplay() {
       timerEl.textContent = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
   } catch (e) {
-    // Extension context may be invalidated
+    console.warn("FocusGuard: updateTimerDisplay error", e);
   }
 }
 
 updateTimerDisplay();
-setInterval(updateTimerDisplay, 1000);
+setInterval(() => { updateTimerDisplay().catch(e => console.warn("FocusGuard: timer display", e)); }, 1000);
 
 // ─── Return to Dashboard ──────────────────────────────────────
 btnBack.addEventListener("click", () => {
@@ -79,7 +79,9 @@ async function getOriginalUrl() {
         return stored[`emergency_orig_${tab.id}`];
       }
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn("FocusGuard: getOriginalUrl error", e);
+  }
   return null;
 }
 

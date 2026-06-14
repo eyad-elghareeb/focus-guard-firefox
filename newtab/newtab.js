@@ -162,7 +162,12 @@ let prevRemainingSeconds = null;
 function startUpdateLoop() {
   if (updateInterval) clearInterval(updateInterval);
   updateInterval = setInterval(async () => {
-    await refreshState();
+    try {
+      await refreshState();
+    } catch (e) {
+      console.warn("FocusGuard: refreshState error", e);
+      return;
+    }
     if (prevRemainingSeconds !== null && currentState) {
       const r = currentState.timer.remainingSeconds;
       if (prevRemainingSeconds > 0 && r === 0 && prevRemainingSeconds <= 2) {
@@ -171,7 +176,10 @@ function startUpdateLoop() {
     }
     if (currentState) prevRemainingSeconds = currentState.timer.remainingSeconds;
     renderTimer();
-    renderAnalytics();
+    // Only render analytics when that tab is active (avoid unnecessary DOM churn)
+    if (els.analyticsChart && els.analyticsChart.closest(".tab-content")?.classList.contains("active")) {
+      renderAnalytics();
+    }
     updateActiveSessionIndicator();
   }, 1000);
 }
@@ -260,7 +268,7 @@ function renderTimer() {
 function getActiveSessionElapsed(timer) {
   if (!timer.isRunning || !timer.sessionStartTimestamp) return 0;
   // Use the timer's own accounting which is accurate
-  return timer.totalSeconds - timer.remainingSeconds;
+  return Math.max(0, timer.totalSeconds - timer.remainingSeconds);
 }
 
 // ─── Analytics Rendering ───────────────────────────────────────
@@ -467,6 +475,16 @@ function renderMonthAnalytics(dailyStats, timer) {
   `);
 }
 
+function domainFaviconSVG(domain) {
+  const palette = ["#3b82f6","#ef4444","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4","#f97316","#14b8a6","#6366f1"];
+  let hash = 0;
+  for (let i = 0; i < domain.length; i++) hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+  const color = palette[Math.abs(hash) % palette.length];
+  const letter = domain.charAt(0).toUpperCase();
+  const encoded = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="${color}"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${letter}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(encoded)}`;
+}
+
 // ─── Quick Access Sites ────────────────────────────────────────
 async function renderQuickAccess() {
   if (!currentState) return;
@@ -477,11 +495,12 @@ async function renderQuickAccess() {
   }
   let html = "";
   sites.forEach((site, idx) => {
+    const domain = site.domain;
     html += `
-      <a class="qa-item" href="https://${escapeHTML(site.domain)}" target="_blank" rel="noopener" title="${escapeHTML(site.domain)}">
-        <img class="qa-favicon" src="https://www.google.com/s2/favicons?domain=${escapeHTML(site.domain)}&sz=32" alt="" loading="lazy" onerror="this.style.display='none'">
-        <span class="qa-domain">${escapeHTML(site.domain.replace(/\.\w+$/, '').length > 10 ? site.domain.replace(/\.\w+$/, '').substring(0, 8) + '...' : site.domain.replace(/\.\w+$/, ''))}</span>
-        <button class="qa-remove" data-domain="${escapeHTML(site.domain)}" title="Remove">&times;</button>
+      <a class="qa-item" href="https://${escapeHTML(domain)}" target="_blank" rel="noopener" title="${escapeHTML(domain)}">
+        <span class="qa-favicon-wrap" data-domain="${escapeHTML(domain)}"></span>
+        <span class="qa-domain">${escapeHTML(domain.replace(/\.\w+$/, '').length > 10 ? domain.replace(/\.\w+$/, '').substring(0, 8) + '...' : domain.replace(/\.\w+$/, ''))}</span>
+        <button class="qa-remove" data-domain="${escapeHTML(domain)}" title="Remove">&times;</button>
       </a>
     `;
   });
@@ -495,6 +514,15 @@ async function renderQuickAccess() {
       await refreshState();
       renderQuickAccess();
     });
+  });
+  els.quickAccessGrid.querySelectorAll(".qa-favicon-wrap").forEach(wrap => {
+    const domain = wrap.dataset.domain;
+    const img = document.createElement("img");
+    img.className = "qa-favicon";
+    img.src = domainFaviconSVG(domain);
+    img.alt = "";
+    img.addEventListener("error", () => { img.style.display = "none"; });
+    wrap.replaceWith(img);
   });
 }
 
@@ -532,7 +560,7 @@ async function renderSiteUsage() {
     const domain = placeholder.dataset.domain;
     const img = document.createElement("img");
     img.className = "site-favicon";
-    img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+    img.src = domainFaviconSVG(domain);
     img.alt = "";
     img.addEventListener("error", () => { img.style.display = "none"; });
     placeholder.replaceWith(img);
@@ -980,7 +1008,7 @@ function handleLogNextDay() {
 
 function escapeHTML(str) {
   const div = document.createElement("div");
-  div.textContent = str;
+  div.textContent = str ?? "";
   return div.innerHTML;
 }
 
@@ -1025,7 +1053,9 @@ function playNotificationSound() {
       osc2.start(ctx.currentTime + 0.35);
       osc2.stop(ctx.currentTime + 0.65);
     }, 300);
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn("FocusGuard: playNotificationSound error", e);
+  }
 }
 
 browser.runtime.onMessage.addListener((message) => {
@@ -1262,7 +1292,9 @@ async function handleAddQuickAccess() {
     await browser.runtime.sendMessage({ action: "addQuickAccess", domain });
     await refreshState();
     renderQuickAccess();
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn("FocusGuard: handleAddQuickAccess error", e);
+  }
 }
 
 async function handleAddQACustom() {
@@ -1297,7 +1329,9 @@ async function handleAddMostVisited() {
     await browser.runtime.sendMessage({ action: "addQuickAccessBatch", domains });
     await refreshState();
     renderQuickAccess();
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn("FocusGuard: handleAddMostVisited error", e);
+  }
 }
 
 async function handleAddSite() {

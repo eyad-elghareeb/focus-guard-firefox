@@ -21,8 +21,12 @@ async function init() {
   await refreshState();
   render();
   updateInterval = setInterval(async () => {
-    await refreshState();
-    render();
+    try {
+      await refreshState();
+      render();
+    } catch (e) {
+      console.warn("FocusGuard: popup update error", e);
+    }
   }, 1000);
   bindEvents();
 }
@@ -31,13 +35,18 @@ async function refreshState() {
   try {
     const response = await browser.runtime.sendMessage({ action: "getState" });
     if (response.success) currentState = response.data;
-  } catch (e) { /* context invalidated */ }
+  } catch (e) {
+    if (e.message && e.message.includes("Could not establish connection")) {
+      // Popup closed or background not ready — expected
+    } else {
+      console.warn("FocusGuard: refreshState error", e);
+    }
+  }
 }
 
 function render() {
   if (!currentState) return;
   const { timer, settings, dailyStats } = currentState;
-  const today = new Date().toISOString().split("T")[0];
 
   // Use local date key matching background
   const now = new Date();
@@ -175,7 +184,9 @@ browser.runtime.onMessage.addListener((message) => {
         osc2.start(ctx.currentTime + 0.35);
         osc2.stop(ctx.currentTime + 0.65);
       }, 300);
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      console.warn("FocusGuard: playNotificationSound error", e);
+    }
   }
 });
 

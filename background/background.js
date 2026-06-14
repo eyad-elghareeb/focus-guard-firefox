@@ -122,6 +122,29 @@ function deepMerge(target, source) {
   return output;
 }
 
+let timerTickInterval = null;
+let trackingTickInterval = null;
+
+function startTimerTick() {
+  clearInterval(timerTickInterval);
+  timerTickInterval = setInterval(tickTimer, 1000);
+}
+
+function stopTimerTick() {
+  clearInterval(timerTickInterval);
+  timerTickInterval = null;
+}
+
+function startTrackingTick() {
+  clearInterval(trackingTickInterval);
+  trackingTickInterval = setInterval(updateSiteActiveTime, 5000);
+}
+
+function stopTrackingTick() {
+  clearInterval(trackingTickInterval);
+  trackingTickInterval = null;
+}
+
 // ─── Timer Logic ──────────────────────────────────────────────
 async function startTimer() {
   const s = await getState();
@@ -132,9 +155,12 @@ async function startTimer() {
   s.timer.sessionStartTimestamp = Date.now();
   await saveState();
 
-  // Clear existing alarm and set a new one that fires every second
+  // Use setInterval for accurate sub-minute timing (Firefox clamps alarms to 1min)
+  startTimerTick();
+
+  // Set 1-minute alarm as fallback for Chrome service worker wake-up
   await browser.alarms.clear(ALARM_TIMER);
-  browser.alarms.create(ALARM_TIMER, { periodInMinutes: 1 / 60 });
+  browser.alarms.create(ALARM_TIMER, { periodInMinutes: 1 });
 
   // Update badge
   updateBadge(s.timer.remainingSeconds);
@@ -154,7 +180,7 @@ async function pauseTimer() {
   s.timer.isPaused = true;
   s.timer.lastTick = null;
   await saveState();
-
+  stopTimerTick();
   await browser.alarms.clear(ALARM_TIMER);
   updateBadge(s.timer.remainingSeconds, true);
 }
@@ -164,9 +190,9 @@ async function resumeTimer() {
   s.timer.isPaused = false;
   s.timer.lastTick = Date.now();
   await saveState();
-
+  startTimerTick();
   await browser.alarms.clear(ALARM_TIMER);
-  browser.alarms.create(ALARM_TIMER, { periodInMinutes: 1 / 60 });
+  browser.alarms.create(ALARM_TIMER, { periodInMinutes: 1 });
   updateBadge(s.timer.remainingSeconds);
 }
 
@@ -179,7 +205,7 @@ async function stopTimer() {
   s.timer.lastTick = null;
   s.timer.sessionStartTimestamp = null;
   await saveState();
-
+  stopTimerTick();
   await browser.alarms.clear(ALARM_TIMER);
   await applyBlockingRules(false);
   clearBadge();
@@ -473,7 +499,7 @@ async function trackSiteVisit(tabId, url) {
 
     await saveState();
   } catch (e) {
-    // Ignore invalid URLs
+    console.warn("FocusGuard: trackSiteVisit error", e);
   }
 }
 
@@ -508,7 +534,7 @@ async function updateSiteActiveTime() {
       await saveState();
     }
   } catch (e) {
-    // Ignore errors
+    console.warn("FocusGuard: updateSiteActiveTime error", e);
   }
 }
 
@@ -600,7 +626,7 @@ async function checkAndBlockTab(tabId, url) {
       browser.tabs.update(tabId, { url: blockedUrl });
     }
   } catch (e) {
-    // Ignore
+    console.warn("FocusGuard: checkAndBlockTab error", e);
   }
 }
 
@@ -608,7 +634,13 @@ async function checkAndBlockTab(tabId, url) {
 async function broadcastSound() {
   try {
     await browser.runtime.sendMessage({ action: "playSound" });
-  } catch (e) { /* no listeners */ }
+  } catch (e) {
+    if (e.message && e.message.includes("Could not establish connection")) {
+      // No listeners — expected when no extension pages are open
+    } else {
+      console.warn("FocusGuard: broadcastSound error", e);
+    }
+  }
 }
 
 // ─── Utility Functions ────────────────────────────────────────
@@ -669,7 +701,9 @@ browser.webNavigation.onBeforeNavigate.addListener(async (details) => {
     if (matchedSite) {
       await browser.storage.session.set({ [`emergency_orig_${details.tabId}`]: url });
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn("FocusGuard: webNavigation.onBeforeNavigate error", e);
+  }
 });
 
 // ─── Tabs Event Handlers ──────────────────────────────────────
@@ -687,7 +721,7 @@ browser.tabs.onActivated.addListener(async (activeInfo) => {
       await trackSiteVisit(activeInfo.tabId, tab.url);
     }
   } catch (e) {
-    // Tab may not exist
+    console.warn("FocusGuard: tabs.onActivated error", e);
   }
 });
 
@@ -744,13 +778,8 @@ async function handleMessage(message) {
       s.timer.lastTick = null;
       s.timer.sessionStartTimestamp = null;
 
-      // If skipping from work to break, reset the streak since it's incomplete
-      if (message.mode !== "work" && s.timer.currentStreak > 0) {
-        // Don't reset streak on skip — they still did some work
-        // s.timer.currentStreak = 0;
-      }
-
       await saveState();
+      stopTimerTick();
       await browser.alarms.clear(ALARM_TIMER);
       clearBadge();
       return { success: true };
@@ -973,11 +1002,8 @@ async function handleMessage(message) {
 
     case "getStudyLog": {
       const filterDate = message.date;  // optional: filter by date
-      let entries = s.studyLog;
-      if (filterDate) {
-        entries = entries.filter(e => e.date === filterDate);
-      }
-      // Sort newest first
+      const entries = (filterDate ? s.studyLog.filter(e => e.date === filterDate) : [...s.studyLog]);
+      // Sort newest first (copy to avoid mutating state)
       entries.sort((a, b) => b.timestamp - a.timestamp);
       // Limit to last 200 entries
       return { success: true, data: entries.slice(0, 200) };
@@ -1149,10 +1175,13 @@ async function handleMessage(message) {
 async function initialize() {
   await getState();
 
-  // Start tracking alarm (every 5 seconds to measure active time)
+  // Start active-time tracking via setInterval (Firefox persistent background)
+  startTrackingTick();
+
+  // Set 1-minute tracking alarm for Chrome service worker wake-up
   const existingAlarms = await browser.alarms.get(ALARM_TRACKING);
   if (!existingAlarms) {
-    browser.alarms.create(ALARM_TRACKING, { periodInMinutes: 1 / 12 }); // Every 5 seconds
+    browser.alarms.create(ALARM_TRACKING, { periodInMinutes: 1 });
   }
 
   // If timer was running before browser close, recalculate
@@ -1165,7 +1194,8 @@ async function initialize() {
     if (state.timer.remainingSeconds <= 0) {
       await onTimerComplete(state);
     } else {
-      browser.alarms.create(ALARM_TIMER, { periodInMinutes: 1 / 60 });
+      startTimerTick();
+      browser.alarms.create(ALARM_TIMER, { periodInMinutes: 1 });
       updateBadge(state.timer.remainingSeconds);
     }
     await saveState();
