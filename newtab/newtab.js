@@ -155,6 +155,17 @@ function switchTab(tabId) {
 async function refreshState() {
   const response = await browser.runtime.sendMessage({ action: "getState" });
   if (response.success) currentState = response.data;
+  updateDesktopSyncBadge();
+}
+
+function updateDesktopSyncBadge() {
+  const badge = document.getElementById("desktopSyncBadge");
+  if (!badge) return;
+  if (currentState && currentState.desktopConnected) {
+    badge.style.display = "inline-flex";
+  } else {
+    badge.style.display = "none";
+  }
 }
 
 let prevRemainingSeconds = null;

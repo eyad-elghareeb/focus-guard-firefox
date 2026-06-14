@@ -43,7 +43,7 @@
   },
 
   "background": {
-    "scripts": ["background/background.js"]
+    "scripts": ["background/sync.js", "background/background.js"]
   },
 
   "icons": {

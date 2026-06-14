@@ -75,7 +75,9 @@ const DEFAULT_STATE = {
     { domain: "github.com" },
     { domain: "stackoverflow.com" },
     { domain: "developer.mozilla.org" }
-  ]
+  ],
+  // Desktop sync status (set by background/sync.js, surfaced in the UI).
+  desktopConnected: false
 };
 
 // ─── State Management ─────────────────────────────────────────
@@ -101,6 +103,11 @@ async function saveState() {
   if (!state) return;
   try {
     await browser.storage.local.set({ [STORAGE_KEY]: state });
+    // Push to the desktop broker (no-op if disconnected). Keeps the desktop
+    // UI in sync with browser-side activity (timer, todos, blocked sites).
+    if (globalThis.FocusGuardSync) {
+      globalThis.FocusGuardSync.pushStateToDesktop(state);
+    }
   } catch (e) {
     console.error("FocusGuard: Error saving state", e);
   }
@@ -871,6 +878,20 @@ async function handleMessage(message) {
         data: s.siteUsage[message.date || getTodayKey()] || {}
       };
 
+    case "getDesktopAppUsage": {
+      // Forwarded to the desktop broker — extensions can't see native apps.
+      const usage = globalThis.FocusGuardSync
+        ? await globalThis.FocusGuardSync.fetchDesktopAppUsage()
+        : null;
+      return { success: true, data: usage || {} };
+    }
+
+    case "getDesktopConnected":
+      return {
+        success: true,
+        connected: !!(globalThis.FocusGuardSync && globalThis.FocusGuardSync.isDesktopConnected()),
+      };
+
     case "getWeeklyStats": {
       const weekData = {};
       for (let i = 6; i >= 0; i--) {
@@ -1171,9 +1192,74 @@ async function handleMessage(message) {
   }
 }
 
+// ─── Desktop Sync pull handler ────────────────────────────────
+// Called periodically by background/sync.js when the desktop broker is
+// reachable. Merges remote state (desktop-side changes) into local state.
+globalThis.bgPullDesktopState = async function () {
+  try {
+    const result = globalThis.FocusGuardSync
+      ? await globalThis.FocusGuardSync.pullStateFromDesktop()
+      : null;
+    if (!result || !result.extension) return;
+    const remote = result.extension;
+    // Only merge fields the extension understands; ignore desktop-only ones.
+    const s = await getState();
+    let changed = false;
+    if (remote.timer && (remote.timer.lastTick || 0) >= (s.timer.lastTick || 0)) {
+      s.timer = Object.assign({}, s.timer, remote.timer);
+      changed = true;
+    }
+    if (remote.settings) {
+      Object.assign(s.settings, remote.settings);
+      changed = true;
+    }
+    if (Array.isArray(remote.blockedSites)) {
+      const local = new Set(s.blockedSites.map(b => b.domain));
+      for (const b of remote.blockedSites) {
+        if (!local.has(b.domain)) { s.blockedSites.push(b); changed = true; }
+      }
+    }
+    if (Array.isArray(remote.todos)) {
+      const local = new Set(s.todos.map(t => t.id));
+      for (const t of remote.todos) {
+        if (!local.has(t.id)) { s.todos.push(t); changed = true; }
+      }
+    }
+    if (Array.isArray(remote.quickAccess)) {
+      const local = new Set(s.quickAccess.map(q => q.domain));
+      for (const q of remote.quickAccess) {
+        if (!local.has(q.domain)) { s.quickAccess.push(q); changed = true; }
+      }
+    }
+    if (remote.dailyStats) {
+      Object.assign(s.dailyStats, remote.dailyStats);
+      changed = true;
+    }
+    if (changed) await saveState();
+  } catch (e) {
+    console.warn("FocusGuard: desktop sync pull failed", e);
+  }
+};
+
+// Flip the persisted desktopConnected flag when the broker goes up/down.
+globalThis.bgOnDesktopConnectionChange = async function (connected) {
+  const s = await getState();
+  if (s.desktopConnected !== connected) {
+    s.desktopConnected = connected;
+    await saveState();
+    // Force a re-render of any open newtab/popup.
+    try { browser.runtime.sendMessage({ action: "desktopConnectionChanged", connected }).catch(() => {}); } catch {}
+  }
+};
+
 // ─── Initialize ───────────────────────────────────────────────
 async function initialize() {
   await getState();
+
+  // Start desktop sync (no-op if background/sync.js isn't loaded).
+  if (globalThis.FocusGuardSync) {
+    globalThis.FocusGuardSync.startDesktopSync();
+  }
 
   // Start active-time tracking via setInterval (Firefox persistent background)
   startTrackingTick();
