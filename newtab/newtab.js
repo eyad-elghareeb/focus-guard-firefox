@@ -6,8 +6,8 @@
 let currentState = null;
 let updateInterval = null;
 let logViewDate = null;
-let analyticsPeriod = "day"; // "day" | "week" | "month"
-let lastStudyLogKey = null;  // Track last rendered study log to avoid flicker
+let analyticsPeriod = "day";
+let lastStudyLogKey = null;
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -25,7 +25,6 @@ const els = {
   pomodoroDots: $("#pomodoroDots"),
   pomodoroCount: $("#pomodoroCount"),
   focusMessage: $("#focusMessage"),
-  // Analytics
   anFocusTime: $("#anFocusTime"),
   anPomodoros: $("#anPomodoros"),
   anAvgSession: $("#anAvgSession"),
@@ -33,16 +32,13 @@ const els = {
   analyticsChart: $("#analyticsChart"),
   analyticsExtra: $("#analyticsExtra"),
   analyticsTabs: $$(".analytics-tab"),
-  // Site usage
   siteUsageList: $("#siteUsageList"),
-  // Blocked sites (in settings)
   blockedGrid: $("#blockedGrid"),
   blockToggle: $("#blockToggle"),
   blockToggleLabel: $("#blockToggleLabel"),
   addSiteInput: $("#addSiteInput"),
   addSiteCategory: $("#addSiteCategory"),
   btnAddSite: $("#btnAddSite"),
-  // Settings
   settingsModal: $("#settingsModal"),
   btnOpenSettings: $("#btnOpenSettings"),
   btnCloseSettings: $("#btnCloseSettings"),
@@ -61,14 +57,12 @@ const els = {
   settingNotifications: $("#settingNotifications"),
   settingSound: $("#settingSound"),
   modeBtns: $$(".mode-btn"),
-  // Study log
   studyLogTimeline: $("#studyLogTimeline"),
   studyLogTotal: $("#studyLogTotal"),
   btnAddLogEntry: $("#btnAddLogEntry"),
   btnLogPrevDay: $("#btnLogPrevDay"),
   btnLogNextDay: $("#btnLogNextDay"),
   logDateLabel: $("#logDateLabel"),
-  // Study log modal
   studyLogModal: $("#studyLogModal"),
   studyLogModalTitle: $("#studyLogModalTitle"),
   btnCloseStudyLogModal: $("#btnCloseStudyLogModal"),
@@ -81,12 +75,18 @@ const els = {
   btnSaveLogEntry: $("#btnSaveLogEntry"),
   btnCancelLogEntry: $("#btnCancelLogEntry"),
   btnDeleteLogEntry: $("#btnDeleteLogEntry"),
-  // Todo
   todoList: $("#todoList"),
   todoCount: $("#todoCount"),
   todoInput: $("#todoInput"),
   btnAddTodo: $("#btnAddTodo"),
-  btnClearDone: $("#btnClearDone")
+  btnClearDone: $("#btnClearDone"),
+  tabBtns: $$(".tab-btn"),
+  tabContents: $$(".tab-content"),
+  quickAccessGrid: $("#quickAccessGrid"),
+  btnAddQuickAccess: $("#btnAddQuickAccess"),
+  btnExportData: $("#btnExportData"),
+  btnImportData: $("#btnImportData"),
+  importFileInput: $("#importFileInput")
 };
 
 // ─── Focus Messages ────────────────────────────────────────────
@@ -136,6 +136,15 @@ async function init() {
   updateGreeting();
   updateDate();
   setInterval(() => { updateGreeting(); updateDate(); }, 60000);
+  switchTab("main");
+}
+
+function switchTab(tabId) {
+  els.tabBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabId));
+  els.tabContents.forEach(content => content.classList.toggle("active", content.id === "tab" + tabId.charAt(0).toUpperCase() + tabId.slice(1)));
+  if (tabId === "tasks") renderTodos();
+  if (tabId === "analytics") { renderAnalytics(); renderSiteUsage(); renderStudyLog(); }
+  if (tabId === "main") renderQuickAccess();
 }
 
 async function refreshState() {
@@ -143,13 +152,21 @@ async function refreshState() {
   if (response.success) currentState = response.data;
 }
 
+let prevRemainingSeconds = null;
+
 function startUpdateLoop() {
   if (updateInterval) clearInterval(updateInterval);
   updateInterval = setInterval(async () => {
     await refreshState();
+    if (prevRemainingSeconds !== null && currentState) {
+      const r = currentState.timer.remainingSeconds;
+      if (prevRemainingSeconds > 0 && r === 0 && prevRemainingSeconds <= 2) {
+        if (currentState.settings.soundEnabled) playNotificationSound();
+      }
+    }
+    if (currentState) prevRemainingSeconds = currentState.timer.remainingSeconds;
     renderTimer();
     renderAnalytics();
-    // Only update the active session indicator, not the full study log
     updateActiveSessionIndicator();
   }, 1000);
 }
@@ -163,6 +180,7 @@ function renderAll() {
   renderSettings();
   renderStudyLog();
   renderTodos();
+  renderQuickAccess();
 }
 
 let lastMode = null;
@@ -442,6 +460,37 @@ function renderMonthAnalytics(dailyStats, timer) {
     <div class="extra-stat accent-green"><strong>${activeDays}/${todayDate}</strong> days</div>
     <div class="extra-stat accent-amber"><strong>${formatMins(avgMins)}</strong> avg/day</div>
   `);
+}
+
+// ─── Quick Access Sites ────────────────────────────────────────
+async function renderQuickAccess() {
+  if (!currentState) return;
+  const sites = currentState.quickAccess || [];
+  if (sites.length === 0) {
+    setHTML(els.quickAccessGrid, '<div class="empty-state">Add sites you visit often</div>');
+    return;
+  }
+  let html = "";
+  sites.forEach((site, idx) => {
+    html += `
+      <a class="qa-item" href="https://${escapeHTML(site.domain)}" target="_blank" rel="noopener" title="${escapeHTML(site.domain)}">
+        <img class="qa-favicon" src="https://www.google.com/s2/favicons?domain=${escapeHTML(site.domain)}&sz=32" alt="" loading="lazy" onerror="this.style.display='none'">
+        <span class="qa-domain">${escapeHTML(site.domain.replace(/\.\w+$/, '').length > 10 ? site.domain.replace(/\.\w+$/, '').substring(0, 8) + '...' : site.domain.replace(/\.\w+$/, ''))}</span>
+        <button class="qa-remove" data-domain="${escapeHTML(site.domain)}" title="Remove">&times;</button>
+      </a>
+    `;
+  });
+  setHTML(els.quickAccessGrid, html);
+  els.quickAccessGrid.querySelectorAll(".qa-remove").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const domain = btn.dataset.domain;
+      await browser.runtime.sendMessage({ action: "removeQuickAccess", domain });
+      await refreshState();
+      renderQuickAccess();
+    });
+  });
 }
 
 // ─── Site Usage ────────────────────────────────────────────────
@@ -944,6 +993,81 @@ function setHTML(el, html) {
   }
 }
 
+// ─── Sound Playback ────────────────────────────────────────────
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+    setTimeout(() => {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(1100, ctx.currentTime);
+      gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.35);
+      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.65);
+      osc2.start(ctx.currentTime + 0.35);
+      osc2.stop(ctx.currentTime + 0.65);
+    }, 300);
+  } catch (e) { /* ignore */ }
+}
+
+browser.runtime.onMessage.addListener((message) => {
+  if (message.action === "playSound" && currentState && currentState.settings.soundEnabled) {
+    playNotificationSound();
+  }
+});
+
+// ─── Import/Export ─────────────────────────────────────────────
+async function handleExportData() {
+  const response = await browser.runtime.sendMessage({ action: "exportData" });
+  if (!response.success) return;
+  const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `focusguard-backup-${getTodayKey()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function handleImportData() {
+  els.importFileInput.click();
+}
+
+async function handleImportFileSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.timer && !data.settings && !data.todos && !data.studyLog && !data.blockedSites) {
+      alert("Invalid backup file: missing required data fields.");
+      return;
+    }
+    if (!confirm("Import will merge imported data with your current data. Continue?")) return;
+    await browser.runtime.sendMessage({ action: "importData", data });
+    await refreshState();
+    lastStudyLogKey = null;
+    renderAll();
+    alert("Data imported successfully!");
+  } catch (err) {
+    alert("Failed to import data: " + err.message);
+  }
+  e.target.value = "";
+}
+
 // ─── Events ────────────────────────────────────────────────────
 function bindEvents() {
   els.btnStart.addEventListener("click", handleStartPause);
@@ -999,6 +1123,14 @@ function bindEvents() {
     renderTodos();
   });
 
+  // Tab switching
+  els.tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  // Quick access
+  els.btnAddQuickAccess.addEventListener("click", handleAddQuickAccess);
+
   // Settings
   els.btnOpenSettings.addEventListener("click", () => {
     renderSettings();
@@ -1016,6 +1148,28 @@ function bindEvents() {
 
   els.btnSaveSettings.addEventListener("click", handleSaveSettings);
   els.btnResetData.addEventListener("click", handleResetData);
+
+  // Import/Export
+  els.btnExportData.addEventListener("click", handleExportData);
+  els.btnImportData.addEventListener("click", handleImportData);
+  els.importFileInput.addEventListener("change", handleImportFileSelected);
+
+  // Stepper buttons
+  document.querySelectorAll(".stepper-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.target;
+      const dir = parseInt(btn.dataset.dir);
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      const min = parseInt(input.min);
+      const max = parseInt(input.max);
+      const step = targetId === "settingGoalMinutes" ? 5 : 1;
+      let val = (parseInt(input.value) || 0) + (dir * step);
+      if (!isNaN(min)) val = Math.max(min, val);
+      if (!isNaN(max)) val = Math.min(max, val);
+      input.value = val;
+    });
+  });
 }
 
 // ─── Handlers ──────────────────────────────────────────────────
@@ -1074,6 +1228,19 @@ async function handleAddTodo() {
   await browser.runtime.sendMessage({ action: "addTodo", text });
   els.todoInput.value = "";
   renderTodos();
+}
+
+async function handleAddQuickAccess() {
+  try {
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tabs.length === 0 || !tabs[0].url) return;
+    const url = new URL(tabs[0].url);
+    const domain = url.hostname.replace(/^www\./, "");
+    if (!domain) return;
+    await browser.runtime.sendMessage({ action: "addQuickAccess", domain });
+    await refreshState();
+    renderQuickAccess();
+  } catch (e) { /* ignore */ }
 }
 
 async function handleAddSite() {

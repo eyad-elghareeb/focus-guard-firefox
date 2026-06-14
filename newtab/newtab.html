@@ -44,10 +44,32 @@
       </div>
     </header>
 
-    <!-- ─── Main Content ────────────────────────────────── -->
-    <main class="dashboard">
+    <!-- ─── Tab Bar ─────────────────────────────────────── -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="main">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        Focus
+      </button>
+      <button class="tab-btn" data-tab="tasks">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Tasks
+      </button>
+      <button class="tab-btn" data-tab="analytics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+        </svg>
+        Analytics
+      </button>
+    </nav>
 
-      <!-- Left: Timer Section -->
+    <!-- ─── Tab Content: Main ───────────────────────────── -->
+    <div class="tab-content active" id="tabMain">
+
+      <!-- Timer Section -->
       <section class="timer-section">
         <div class="timer-card glass-card">
 
@@ -137,74 +159,129 @@
         </div>
       </section>
 
-      <!-- Right: Analytics Sidebar -->
-      <section class="stats-section">
-
-        <!-- Analytics Card -->
+      <!-- Quick Access Sites -->
+      <section class="quick-access-section">
         <div class="stat-card glass-card">
           <div class="stat-card-header">
             <div class="stat-card-icon stat-icon-blue">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+                <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
             </div>
-            <h3 class="stat-card-title">Analytics</h3>
-          </div>
-
-          <!-- Period Tabs -->
-          <div class="analytics-tabs">
-            <button class="analytics-tab active" data-period="day">Day</button>
-            <button class="analytics-tab" data-period="week">Week</button>
-            <button class="analytics-tab" data-period="month">Month</button>
-          </div>
-
-          <!-- Quick Stats Row -->
-          <div class="analytics-quick-stats" id="analyticsQuickStats">
-            <div class="quick-stat">
-              <span class="quick-stat-value" id="anFocusTime">0m</span>
-              <span class="quick-stat-label">Focus</span>
-            </div>
-            <div class="quick-stat">
-              <span class="quick-stat-value" id="anPomodoros">0</span>
-              <span class="quick-stat-label">Pomodoros</span>
-            </div>
-            <div class="quick-stat">
-              <span class="quick-stat-value" id="anAvgSession">0m</span>
-              <span class="quick-stat-label">Avg/Session</span>
-            </div>
-            <div class="quick-stat">
-              <span class="quick-stat-value" id="anBestStreak">0</span>
-              <span class="quick-stat-label">Best Streak</span>
-            </div>
-          </div>
-
-          <!-- Period Chart -->
-          <div class="analytics-chart" id="analyticsChart"></div>
-
-          <!-- Extra Stats Row -->
-          <div class="analytics-extra" id="analyticsExtra"></div>
-        </div>
-
-        <!-- Site Usage -->
-        <div class="stat-card glass-card">
-          <div class="stat-card-header">
-            <div class="stat-card-icon stat-icon-amber">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            <h3 class="stat-card-title">Quick Access</h3>
+            <button class="icon-btn-sm" id="btnAddQuickAccess" title="Add current site">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-            </div>
-            <h3 class="stat-card-title">Site Usage</h3>
+            </button>
           </div>
-          <div class="site-usage-list" id="siteUsageList">
-            <div class="empty-state">Start browsing to see data</div>
+          <div class="quick-access-grid" id="quickAccessGrid">
+            <div class="empty-state">Add sites you visit often</div>
           </div>
         </div>
       </section>
-    </main>
 
-    <!-- ─── Study Log + Todo Row ────────────────────────────── -->
-    <div class="bottom-row">
+    </div>
+
+    <!-- ─── Tab Content: Tasks ──────────────────────────── -->
+    <div class="tab-content" id="tabTasks">
+
+      <!-- Todo List -->
+      <section class="todo-section-full glass-card">
+        <div class="todo-header">
+          <div class="todo-header-left">
+            <div class="todo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </div>
+            <h3>Tasks</h3>
+            <span class="todo-count" id="todoCount">0</span>
+          </div>
+          <button class="btn-clear-done" id="btnClearDone" title="Clear completed tasks">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="todo-add">
+          <input type="text" id="todoInput" placeholder="Add a task..." maxlength="200" autocomplete="off">
+          <button class="btn-todo-add" id="btnAddTodo" title="Add task">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="todo-list" id="todoList">
+          <div class="empty-state">No tasks yet</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ─── Tab Content: Analytics ──────────────────────── -->
+    <div class="tab-content" id="tabAnalytics">
+
+      <!-- Analytics Card -->
+      <div class="stat-card glass-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon stat-icon-blue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+            </svg>
+          </div>
+          <h3 class="stat-card-title">Analytics</h3>
+        </div>
+
+        <!-- Period Tabs -->
+        <div class="analytics-tabs">
+          <button class="analytics-tab active" data-period="day">Day</button>
+          <button class="analytics-tab" data-period="week">Week</button>
+          <button class="analytics-tab" data-period="month">Month</button>
+        </div>
+
+        <!-- Quick Stats Row -->
+        <div class="analytics-quick-stats" id="analyticsQuickStats">
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="anFocusTime">0m</span>
+            <span class="quick-stat-label">Focus</span>
+          </div>
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="anPomodoros">0</span>
+            <span class="quick-stat-label">Pomodoros</span>
+          </div>
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="anAvgSession">0m</span>
+            <span class="quick-stat-label">Avg/Session</span>
+          </div>
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="anBestStreak">0</span>
+            <span class="quick-stat-label">Best Streak</span>
+          </div>
+        </div>
+
+        <!-- Period Chart -->
+        <div class="analytics-chart" id="analyticsChart"></div>
+
+        <!-- Extra Stats Row -->
+        <div class="analytics-extra" id="analyticsExtra"></div>
+      </div>
+
+      <!-- Site Usage -->
+      <div class="stat-card glass-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon stat-icon-amber">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <h3 class="stat-card-title">Site Usage</h3>
+        </div>
+        <div class="site-usage-list" id="siteUsageList">
+          <div class="empty-state">Start browsing to see data</div>
+        </div>
+      </div>
 
       <!-- Study Log Section -->
       <section class="study-log-section glass-card">
@@ -245,38 +322,6 @@
         </div>
       </section>
 
-      <!-- Todo List Section -->
-      <section class="todo-section glass-card">
-        <div class="todo-header">
-          <div class="todo-header-left">
-            <div class="todo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M9 11l3 3L22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
-            </div>
-            <h3>Tasks</h3>
-            <span class="todo-count" id="todoCount">0</span>
-          </div>
-          <button class="btn-clear-done" id="btnClearDone" title="Clear completed tasks">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-          </button>
-        </div>
-        <div class="todo-add">
-          <input type="text" id="todoInput" placeholder="Add a task..." maxlength="200" autocomplete="off">
-          <button class="btn-todo-add" id="btnAddTodo" title="Add task">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-        </div>
-        <div class="todo-list" id="todoList">
-          <div class="empty-state">No tasks yet</div>
-        </div>
-      </section>
-
     </div>
 
     <!-- ─── Settings Modal ──────────────────────────────── -->
@@ -302,19 +347,35 @@
             <h4>Timer Durations</h4>
             <div class="settings-row">
               <label>Focus (min)</label>
-              <input type="number" id="settingWork" min="1" max="120" value="25">
+              <div class="stepper-input">
+                <button class="stepper-btn" data-target="settingWork" data-dir="-1">-</button>
+                <input type="number" id="settingWork" min="1" max="120" value="25">
+                <button class="stepper-btn" data-target="settingWork" data-dir="1">+</button>
+              </div>
             </div>
             <div class="settings-row">
               <label>Short Break (min)</label>
-              <input type="number" id="settingShortBreak" min="1" max="30" value="5">
+              <div class="stepper-input">
+                <button class="stepper-btn" data-target="settingShortBreak" data-dir="-1">-</button>
+                <input type="number" id="settingShortBreak" min="1" max="30" value="5">
+                <button class="stepper-btn" data-target="settingShortBreak" data-dir="1">+</button>
+              </div>
             </div>
             <div class="settings-row">
               <label>Long Break (min)</label>
-              <input type="number" id="settingLongBreak" min="1" max="60" value="15">
+              <div class="stepper-input">
+                <button class="stepper-btn" data-target="settingLongBreak" data-dir="-1">-</button>
+                <input type="number" id="settingLongBreak" min="1" max="60" value="15">
+                <button class="stepper-btn" data-target="settingLongBreak" data-dir="1">+</button>
+              </div>
             </div>
             <div class="settings-row">
               <label>Long Break After</label>
-              <input type="number" id="settingLongBreakInterval" min="2" max="10" value="4">
+              <div class="stepper-input">
+                <button class="stepper-btn" data-target="settingLongBreakInterval" data-dir="-1">-</button>
+                <input type="number" id="settingLongBreakInterval" min="2" max="10" value="4">
+                <button class="stepper-btn" data-target="settingLongBreakInterval" data-dir="1">+</button>
+              </div>
             </div>
           </div>
           <!-- Daily Goal -->
@@ -323,9 +384,17 @@
             <div class="settings-row">
               <label>Focus Goal</label>
               <div class="goal-input-row">
-                <input type="number" id="settingGoalHours" min="0" max="16" value="8">
+                <div class="stepper-input">
+                  <button class="stepper-btn" data-target="settingGoalHours" data-dir="-1">-</button>
+                  <input type="number" id="settingGoalHours" min="0" max="16" value="8">
+                  <button class="stepper-btn" data-target="settingGoalHours" data-dir="1">+</button>
+                </div>
                 <span class="goal-unit">h</span>
-                <input type="number" id="settingGoalMinutes" min="0" max="59" value="0">
+                <div class="stepper-input">
+                  <button class="stepper-btn" data-target="settingGoalMinutes" data-dir="-1">-</button>
+                  <input type="number" id="settingGoalMinutes" min="0" max="59" value="0">
+                  <button class="stepper-btn" data-target="settingGoalMinutes" data-dir="1">+</button>
+                </div>
                 <span class="goal-unit">m</span>
               </div>
             </div>
@@ -354,7 +423,7 @@
               <label class="toggle-switch small"><input type="checkbox" id="settingBlockBreaks"><span class="toggle-track"></span></label>
             </div>
           </div>
-          <!-- Blocked Sites Manager (moved from homepage) -->
+          <!-- Blocked Sites Manager -->
           <div class="settings-group">
             <h4>Blocked Sites</h4>
             <div class="settings-blocked-status" id="settingsBlockStatus">
@@ -395,6 +464,19 @@
               <label>Sound Alerts</label>
               <label class="toggle-switch small"><input type="checkbox" id="settingSound" checked><span class="toggle-track"></span></label>
             </div>
+          </div>
+          <!-- Import/Export -->
+          <div class="settings-group">
+            <h4>Data Management</h4>
+            <div class="settings-row">
+              <label>Export Data</label>
+              <button class="btn-secondary btn-sm" id="btnExportData">Export</button>
+            </div>
+            <div class="settings-row">
+              <label>Import Data</label>
+              <button class="btn-secondary btn-sm" id="btnImportData">Import</button>
+            </div>
+            <input type="file" id="importFileInput" accept=".json" style="display:none">
           </div>
         </div>
         <div class="modal-footer">

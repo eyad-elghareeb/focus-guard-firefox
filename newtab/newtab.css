@@ -1756,3 +1756,220 @@ body {
 @media (max-width: 500px) {
   .todo-delete { opacity: 1; }
 }
+
+/* ─── Tab Bar ──────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: rgba(255,255,255,0.03);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  justify-content: center;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.04);
+}
+
+.tab-btn.active {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.08);
+}
+
+.tab-btn svg { flex-shrink: 0; }
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ─── Quick Access Sites ──────────────────────────────────────── */
+.quick-access-section {
+  margin-top: 20px;
+}
+
+.quick-access-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.qa-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  text-decoration: none;
+  position: relative;
+}
+
+.qa-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.qa-favicon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.qa-domain {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.qa-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: all var(--duration) var(--ease);
+  padding: 0;
+  line-height: 1;
+}
+
+.qa-item:hover .qa-remove {
+  opacity: 1;
+}
+
+.qa-remove:hover {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+/* ─── Todo Section Full (Tasks tab) ──────────────────────────── */
+.todo-section-full {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.todo-section-full .todo-list {
+  max-height: none;
+  flex: 1;
+}
+
+/* ─── Stepper Input ───────────────────────────────────────────── */
+.stepper-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.stepper-input input[type="number"] {
+  width: 48px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  font-weight: 600;
+  -moz-appearance: textfield;
+}
+
+.stepper-input input[type="number"]::-webkit-inner-spin-button,
+.stepper-input input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration) var(--ease);
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+}
+
+.stepper-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+}
+
+.stepper-btn:active {
+  background: rgba(255,255,255,0.12);
+}
+
+.goal-input-row .stepper-input input[type="number"] {
+  width: 40px;
+}
+
+/* ─── Responsive Tab Bar ──────────────────────────────────────── */
+@media (max-width: 600px) {
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .tab-btn svg {
+    display: none;
+  }
+  .quick-access-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+}
