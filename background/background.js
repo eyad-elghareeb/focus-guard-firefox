@@ -1089,6 +1089,21 @@ async function handleMessage(message) {
       return { success: true };
     }
 
+    case "addQuickAccessBatch": {
+      const rawDomains = message.domains || [];
+      let added = 0;
+      for (const d of rawDomains) {
+        const q = d.toLowerCase().trim();
+        if (!q) continue;
+        if (!s.quickAccess.some(x => x.domain === q)) {
+          s.quickAccess.push({ domain: q });
+          added++;
+        }
+      }
+      if (added > 0) await saveState();
+      return { success: true, added };
+    }
+
     // ─── Import/Export ───────────────────────────────────────────
     case "exportData": {
       const exportObj = {

@@ -83,7 +83,12 @@ const els = {
   tabBtns: $$(".tab-btn"),
   tabContents: $$(".tab-content"),
   quickAccessGrid: $("#quickAccessGrid"),
-  btnAddQuickAccess: $("#btnAddQuickAccess"),
+  btnOpenQAPopover: $("#btnOpenQAPopover"),
+  qaPopover: $("#qaPopover"),
+  qaCustomInput: $("#qaCustomInput"),
+  qaAddCustom: $("#qaAddCustom"),
+  qaFromTab: $("#qaFromTab"),
+  qaMostVisited: $("#qaMostVisited"),
   btnExportData: $("#btnExportData"),
   btnImportData: $("#btnImportData"),
   importFileInput: $("#importFileInput")
@@ -1129,7 +1134,20 @@ function bindEvents() {
   });
 
   // Quick access
-  els.btnAddQuickAccess.addEventListener("click", handleAddQuickAccess);
+  els.btnOpenQAPopover.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.qaPopover.classList.toggle("open");
+    if (els.qaPopover.classList.contains("open")) els.qaCustomInput.focus();
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".qa-add-wrap")) els.qaPopover.classList.remove("open");
+  });
+  els.qaCustomInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); handleAddQACustom(); }
+  });
+  els.qaAddCustom.addEventListener("click", handleAddQACustom);
+  els.qaFromTab.addEventListener("click", handleAddQuickAccess);
+  els.qaMostVisited.addEventListener("click", handleAddMostVisited);
 
   // Settings
   els.btnOpenSettings.addEventListener("click", () => {
@@ -1231,6 +1249,7 @@ async function handleAddTodo() {
 }
 
 async function handleAddQuickAccess() {
+  els.qaPopover.classList.remove("open");
   try {
     const tabs = await browser.tabs.query({ currentWindow: true });
     const extUrl = browser.runtime.getURL("");
@@ -1241,6 +1260,41 @@ async function handleAddQuickAccess() {
     const domain = url.hostname.replace(/^www\./, "");
     if (!domain) return;
     await browser.runtime.sendMessage({ action: "addQuickAccess", domain });
+    await refreshState();
+    renderQuickAccess();
+  } catch (e) { /* ignore */ }
+}
+
+async function handleAddQACustom() {
+  els.qaPopover.classList.remove("open");
+  const raw = els.qaCustomInput.value.trim();
+  if (!raw) return;
+  let domain = raw.toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/.*$/, "")
+    .replace(/[^a-z0-9.-]/g, "");
+  if (!domain || !domain.includes(".")) return;
+  els.qaCustomInput.value = "";
+  await browser.runtime.sendMessage({ action: "addQuickAccess", domain });
+  await refreshState();
+  renderQuickAccess();
+}
+
+async function handleAddMostVisited() {
+  els.qaPopover.classList.remove("open");
+  try {
+    const topSites = await browser.topSites.get();
+    const domains = [];
+    for (const site of topSites) {
+      try {
+        if (!site.url.startsWith("http")) continue;
+        const domain = new URL(site.url).hostname.replace(/^www\./, "");
+        if (domain && !domains.includes(domain)) domains.push(domain);
+      } catch (_) {}
+    }
+    if (domains.length === 0) return;
+    await browser.runtime.sendMessage({ action: "addQuickAccessBatch", domains });
     await refreshState();
     renderQuickAccess();
   } catch (e) { /* ignore */ }

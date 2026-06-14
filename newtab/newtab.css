@@ -1893,6 +1893,116 @@ body {
   color: var(--red);
 }
 
+/* ─── Quick Access Popover ─────────────────────────────────── */
+.qa-add-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.qa-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  min-width: 240px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-shadow);
+}
+
+.qa-popover.open {
+  display: flex;
+}
+
+.qa-popover-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.qa-popover-input-row input {
+  flex: 1;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.qa-popover-input-row input:focus {
+  border-color: var(--border-focus);
+}
+
+.qa-popover-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.qa-popover-actions .btn-xs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  white-space: nowrap;
+}
+
+.qa-popover-actions .btn-xs:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.qa-popover-actions .btn-xs svg {
+  flex-shrink: 0;
+}
+
+.btn-xs {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+
+.btn-xs:hover {
+  opacity: 0.85;
+}
+
+.btn-xs.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-xs.btn-ghost:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+}
+
 /* ─── Todo Section Full (Tasks tab) ──────────────────────────── */
 .todo-section-full {
   display: flex;

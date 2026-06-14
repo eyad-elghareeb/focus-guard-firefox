@@ -169,11 +169,29 @@
               </svg>
             </div>
             <h3 class="stat-card-title">Quick Access</h3>
-            <button class="icon-btn-sm" id="btnAddQuickAccess" title="Add current site">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
+            <div class="qa-add-wrap">
+              <button class="icon-btn-sm" id="btnOpenQAPopover" title="Add site">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+              <div class="qa-popover" id="qaPopover">
+                <div class="qa-popover-input-row">
+                  <input type="text" id="qaCustomInput" placeholder="example.com or full URL" spellcheck="false">
+                  <button class="btn-xs" id="qaAddCustom">Add</button>
+                </div>
+                <div class="qa-popover-actions">
+                  <button class="btn-xs btn-ghost" id="qaFromTab">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                    From Tab
+                  </button>
+                  <button class="btn-xs btn-ghost" id="qaMostVisited">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Most Visited
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="quick-access-grid" id="quickAccessGrid">
             <div class="empty-state">Add sites you visit often</div>

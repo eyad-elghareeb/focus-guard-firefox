@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FocusGuard — Study Timer & Site Blocker",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Replace your new tab with a study dashboard. Track your time, block distracting sites, and stay focused with Pomodoro sessions.",
   "author": "FocusGuard",
   "homepage_url": "https://github.com/eyad-elghareeb/focus-guard-firefox",
@@ -21,7 +21,8 @@
     "alarms",
     "notifications",
     "declarativeNetRequest",
-    "declarativeNetRequestFeedback"
+    "declarativeNetRequestFeedback",
+    "topSites"
   ],
 
   "host_permissions": [
