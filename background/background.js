@@ -1195,19 +1195,36 @@ async function handleMessage(message) {
 // ─── Desktop Sync pull handler ────────────────────────────────
 // Called periodically by background/sync.js when the desktop broker is
 // reachable. Merges remote state (desktop-side changes) into local state.
+//
+// IMPORTANT (v1.7.4): the broker's GET /state returns a merged view with
+// both `extension` (our own last push, echoed back) and `desktop` (the
+// desktop app's state). We merge `desktop` — merging `extension` would
+// only ever re-apply our own echo and never surface desktop changes.
 globalThis.bgPullDesktopState = async function () {
   try {
     const result = globalThis.FocusGuardSync
       ? await globalThis.FocusGuardSync.pullStateFromDesktop()
       : null;
-    if (!result || !result.extension) return;
-    const remote = result.extension;
-    // Only merge fields the extension understands; ignore desktop-only ones.
+    if (!result || !result.desktop) return;
+    const remote = result.desktop;
+    // Only merge fields the extension understands; ignore desktop-only ones
+    // (desktopAppUsage / blockedDesktopApps are fetched separately).
     const s = await getState();
     let changed = false;
-    if (remote.timer && (remote.timer.lastTick || 0) >= (s.timer.lastTick || 0)) {
-      s.timer = Object.assign({}, s.timer, remote.timer);
-      changed = true;
+
+    // Timer — last writer wins by lastTick. Prefer the broker's mergedTimer
+    // when available (it already compared both sides); otherwise fall back
+    // to a direct lastTick comparison against the desktop payload.
+    const remoteTimer = result.mergedTimer || remote.timer;
+    if (remoteTimer && (remoteTimer.lastTick || 0) >= (s.timer.lastTick || 0)) {
+      // Don't blindly clobber a running timer with a stale snapshot: only
+      // adopt if the remote timestamp is actually newer OR our timer is idle.
+      const remoteIsNewer = (remoteTimer.lastTick || 0) > (s.timer.lastTick || 0);
+      const localIdle = !s.timer.isRunning || s.timer.isPaused;
+      if (remoteIsNewer || localIdle) {
+        s.timer = Object.assign({}, s.timer, remoteTimer);
+        changed = true;
+      }
     }
     if (remote.settings) {
       Object.assign(s.settings, remote.settings);
@@ -1246,6 +1263,11 @@ globalThis.bgOnDesktopConnectionChange = async function (connected) {
   const s = await getState();
   if (s.desktopConnected !== connected) {
     s.desktopConnected = connected;
+    // On reconnect, drop the cached "last pushed JSON" so the next push
+    // is guaranteed to land (the broker may have restarted and lost state).
+    if (connected && globalThis.FocusGuardSync && globalThis.FocusGuardSync.resetPushCache) {
+      globalThis.FocusGuardSync.resetPushCache();
+    }
     await saveState();
     // Force a re-render of any open newtab/popup.
     try { browser.runtime.sendMessage({ action: "desktopConnectionChanged", connected }).catch(() => {}); } catch {}
