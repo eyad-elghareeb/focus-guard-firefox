@@ -24,6 +24,7 @@ jobs:
             background/ \
             blocked/ \
             icons/ \
+            dashboard/ \
             newtab/ \
             popup/
 

@@ -57,7 +57,7 @@ setInterval(() => { updateTimerDisplay().catch(e => console.warn("FocusGuard: ti
 // ─── Return to Dashboard ──────────────────────────────────────
 btnBack.addEventListener("click", () => {
   browser.tabs.getCurrent().then(tab => {
-    browser.tabs.update(tab.id, { url: browser.runtime.getURL("newtab/newtab.html") });
+    browser.tabs.update(tab.id, { url: browser.runtime.getURL("dashboard/dashboard.html") });
   });
 });
 

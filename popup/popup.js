@@ -150,7 +150,7 @@ function bindEvents() {
 
   popupDashboard.addEventListener("click", () => {
     try {
-      browser.tabs.create({ url: browser.runtime.getURL("newtab/newtab.html") });
+      browser.tabs.create({ url: browser.runtime.getURL("dashboard/dashboard.html") });
       window.close();
     } catch (e) { console.error("FocusGuard popup:", e); }
   });
