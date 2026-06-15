@@ -184,6 +184,10 @@ browser.runtime.onMessage.addListener((message) => {
         osc2.start(ctx.currentTime + 0.35);
         osc2.stop(ctx.currentTime + 0.65);
       }, 300);
+      // Close AudioContext after sound completes to prevent memory leak
+      setTimeout(() => {
+        ctx.close().catch(() => {});
+      }, 1000);
     } catch (e) {
       console.warn("FocusGuard: playNotificationSound error", e);
     }

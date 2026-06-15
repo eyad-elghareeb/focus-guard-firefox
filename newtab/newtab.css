@@ -666,9 +666,59 @@ body {
 }
 
 .site-usage-right {
-  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.site-timelimit-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.site-timelimit-input {
+  width: 32px;
+  padding: 2px 2px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.site-timelimit-input::-webkit-inner-spin-button,
+.site-timelimit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.site-timelimit-input:focus {
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+}
+
+.site-timelimit-unit {
+  font-size: 9px;
+  color: var(--text-faint);
   font-weight: 500;
+}
+
+.site-usage-time {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.site-usage-time.over-limit {
+  color: var(--red);
+  font-weight: 700;
 }
 
 /* ─── Bottom Row (Study Log + Todo) ────────────────────────── */

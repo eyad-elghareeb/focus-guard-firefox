@@ -8,6 +8,7 @@ let updateInterval = null;
 let logViewDate = null;
 let analyticsPeriod = "day";
 let lastStudyLogKey = null;
+let greetingInterval = null;
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -140,7 +141,7 @@ async function init() {
   bindEvents();
   updateGreeting();
   updateDate();
-  setInterval(() => { updateGreeting(); updateDate(); }, 60000);
+  greetingInterval = setInterval(() => { updateGreeting(); updateDate(); }, 60000);
   switchTab("main");
 }
 
@@ -260,10 +261,13 @@ function renderTimer() {
   });
 
   const interval = settings.longBreakInterval;
-  const completed = timer.completedPomodoros % interval;
+  const cycleProgress = timer.completedPomodoros % interval;
+  // When cycle is complete (e.g., 4/4), show all dots filled; otherwise show cycle progress
+  const displayFilled = (cycleProgress === 0 && timer.completedPomodoros > 0)
+    ? interval : cycleProgress;
   let dotsHTML = "";
   for (let i = 0; i < interval; i++) {
-    dotsHTML += `<div class="pomodoro-dot ${i < completed ? 'filled' : ''}"></div>`;
+    dotsHTML += `<div class="pomodoro-dot ${i < displayFilled ? 'filled' : ''}"></div>`;
   }
   setHTML(els.pomodoroDots, dotsHTML);
   els.pomodoroCount.textContent = `${timer.completedPomodoros} / ${interval}`;
@@ -496,6 +500,20 @@ function domainFaviconSVG(domain) {
   return `data:image/svg+xml,${encodeURIComponent(encoded)}`;
 }
 
+// Privacy-respecting favicon loader: tries DuckDuckGo's favicon service (no logs/tracking),
+// falls back to auto-generated SVG letter to avoid leaking browsing data to third parties
+function loadFavicon(domain) {
+  const img = new Image();
+  // DuckDuckGo's favicon service is privacy-respecting — no logs, no tracking
+  img.src = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+  return new Promise(resolve => {
+    img.onload = () => resolve(img.src);
+    img.onerror = () => resolve(domainFaviconSVG(domain));
+    // Timeout fallback in case the request hangs
+    setTimeout(() => resolve(domainFaviconSVG(domain)), 3000);
+  });
+}
+
 // ─── Quick Access Sites ────────────────────────────────────────
 async function renderQuickAccess() {
   if (!currentState) return;
@@ -530,10 +548,14 @@ async function renderQuickAccess() {
     const domain = wrap.dataset.domain;
     const img = document.createElement("img");
     img.className = "qa-favicon";
-    img.src = domainFaviconSVG(domain);
+    img.src = domainFaviconSVG(domain); // Start with SVG fallback
     img.alt = "";
     img.addEventListener("error", () => { img.style.display = "none"; });
     wrap.replaceWith(img);
+    // Try to load a real favicon asynchronously (privacy-respecting service)
+    loadFavicon(domain).then(src => {
+      if (src !== img.src) img.src = src;
+    });
   });
 }
 
@@ -551,30 +573,62 @@ async function renderSiteUsage() {
     return;
   }
 
+  const blockedSites = currentState.blockedSites || [];
   let html = "";
   sites.forEach(([domain, data]) => {
     const timeStr = formatDuration(data.totalSeconds);
+    const blockedSite = blockedSites.find(bs => bs.domain === domain);
+    const hasTimeLimit = blockedSite && blockedSite.timeLimitMinutes > 0;
+    const timeLimitMins = blockedSite ? (blockedSite.timeLimitMinutes || 0) : 0;
+    const overLimit = hasTimeLimit && data.totalSeconds >= timeLimitMins * 60;
+
     html += `
       <div class="site-usage-item">
         <div class="site-usage-left">
           <span class="site-favicon-placeholder" data-domain="${escapeHTML(domain)}"></span>
           <span class="site-domain">${escapeHTML(domain)}</span>
         </div>
-        <div class="site-usage-right">${timeStr}</div>
+        <div class="site-usage-right">
+          ${blockedSite ? `<span class="site-timelimit-wrap">
+            <input type="number" class="site-timelimit-input" value="${timeLimitMins}" min="0" max="480"
+              data-domain="${escapeHTML(domain)}" title="Time limit in minutes (0 = no limit)">
+            <span class="site-timelimit-unit">min</span>
+          </span>` : ''}
+          <span class="site-usage-time ${overLimit ? 'over-limit' : ''}">${timeStr}</span>
+        </div>
       </div>
     `;
   });
 
   setHTML(els.siteUsageList, html);
 
+  els.siteUsageList.querySelectorAll(".site-timelimit-input").forEach(input => {
+    input.addEventListener("change", async () => {
+      const domain = input.dataset.domain;
+      const minutes = parseInt(input.value) || 0;
+      input.value = minutes;
+      await browser.runtime.sendMessage({ action: "setSiteTimeLimit", domain, minutes });
+      await refreshState();
+      renderSiteUsage();
+    });
+    // Allow Enter key to save
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") input.blur();
+    });
+  });
+
   els.siteUsageList.querySelectorAll(".site-favicon-placeholder").forEach(placeholder => {
     const domain = placeholder.dataset.domain;
     const img = document.createElement("img");
     img.className = "site-favicon";
-    img.src = domainFaviconSVG(domain);
+    img.src = domainFaviconSVG(domain); // Start with SVG fallback
     img.alt = "";
     img.addEventListener("error", () => { img.style.display = "none"; });
     placeholder.replaceWith(img);
+    // Try to load a real favicon asynchronously (privacy-respecting service)
+    loadFavicon(domain).then(src => {
+      if (src !== img.src) img.src = src;
+    });
   });
 }
 
@@ -1064,6 +1118,10 @@ function playNotificationSound() {
       osc2.start(ctx.currentTime + 0.35);
       osc2.stop(ctx.currentTime + 0.65);
     }, 300);
+    // Close AudioContext after sound completes to prevent memory leak
+    setTimeout(() => {
+      ctx.close().catch(() => {});
+    }, 1000);
   } catch (e) {
     console.warn("FocusGuard: playNotificationSound error", e);
   }
@@ -1470,6 +1528,12 @@ document.addEventListener("keydown", (e) => {
     els.settingsModal.classList.remove("open");
     closeStudyLogModal();
   }
+});
+
+// Cleanup on unload to prevent memory leaks
+window.addEventListener("beforeunload", () => {
+  if (updateInterval) clearInterval(updateInterval);
+  if (greetingInterval) clearInterval(greetingInterval);
 });
 
 // ─── Start ─────────────────────────────────────────────────────
